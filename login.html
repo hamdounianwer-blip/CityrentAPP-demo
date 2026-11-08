@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script src="js/protect.js"></script>
+<meta charset="UTF-8"><script src="js/demo-data.js"></script><script src="js/demo-mock.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>City Rent Car — Démo · Sign in</title>
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+<div id="login-gate">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Barlow:wght@700;800;900&display=swap');
+
+  #login-gate {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #0f1923;
+    line-height: 1.5;
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+  }
+  #login-gate *, #login-gate *::before, #login-gate *::after { box-sizing: border-box; }
+  #login-gate h1, #login-gate h2, #login-gate h3, #login-gate p, #login-gate ul, #login-gate ol { margin: 0; }
+  #login-gate button { font-family: inherit; cursor: pointer; border: none; }
+  #login-gate a { color: inherit; text-decoration: none; }
+
+  /* ── SCENE — plein écran, fond noir de base (fallback) ══ */
+  .lg-scene {
+    position: fixed;
+    inset: 0;
+    min-height: 100vh;
+    overflow: hidden;
+    background: #2a2a2a;
+    display: flex;
+    width: 100%;
+  }
+
+  /* ══ VIDÉO BACKGROUND — fullscreen, muet, loop ══ */
+  .lg-video-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+    will-change: transform;
+  }
+
+  /* Overlay doux : assombrir à GAUCHE pour le texte de marque,
+     garder le CENTRE-DROIT clair pour voir la vidéo derrière la form */
+  .lg-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+      /* Gauche plus sombre (lisibilité du headline) */
+      linear-gradient(to right,
+        rgba(15, 25, 35, 0.55) 0%,
+        rgba(15, 25, 35, 0.35) 25%,
+        rgba(15, 25, 35, 0.15) 45%,
+        rgba(15, 25, 35, 0.05) 60%,
+        rgba(15, 25, 35, 0.00) 75%,
+        rgba(15, 25, 35, 0.00) 100%
+      ),
+      /* Bas plus sombre (lisibilité des stats) */
+      linear-gradient(to bottom,
+        rgba(15, 25, 35, 0.00) 0%,
+        rgba(15, 25, 35, 0.00) 40%,
+        rgba(15, 25, 35, 0.25) 70%,
+        rgba(15, 25, 35, 0.45) 100%
+      );
+    pointer-events: none;
+  }
+
+  /* Particules dorées */
+  .lg-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+  .lg-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(182,145,0,0.20);
+    animation: lgFloat linear infinite;
+  }
+  @keyframes lgFloat {
+    0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.5; }
+    100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+  }
+
+  /* Barre accent gauche */
+  .lg-accent-bar {
+    position: absolute; top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: linear-gradient(to bottom, #b69100, #e0a800, #b69100);
+    animation: lgBarPulse 3s ease-in-out infinite;
+    z-index: 3;
+  }
+  @keyframes lgBarPulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+  /* ══ INNER — flex: brand à gauche, form à droite ══ */
+  .lg-inner {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+  }
+
+  /* Brand area — gauche */
+  .lg-brand-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 52px 60px;
+    position: relative;
+    min-width: 0;
+  }
+
+  /* LOGO haut-gauche */
+  .lg-logo-wrap {
+    position: absolute;
+    top: 28px;
+    left: 36px;
+    z-index: 10;
+    animation: lgSlideDown 0.7s cubic-bezier(.16,1,.3,1) 0.05s both;
+  }
+  .lg-logo-img {
+    width: min(560px, 82vw);
+    height: auto;
+    display: block;
+    object-fit: contain;
+    mix-blend-mode: normal;
+    filter: drop-shadow(0 3px 14px rgba(0,0,0,0.55));
+  }
+  @keyframes lgSlideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Brand content (en bas à gauche) */
+  .lg-brand {
+    position: relative;
+    z-index: 2;
+    animation: lgSlideUp 0.8s cubic-bezier(.16,1,.3,1) 0.15s both;
+  }
+  @keyframes lgSlideUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .lg-tagline-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 100px;
+    padding: 6px 15px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .lg-tagline-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: #e0a800;
+    border-radius: 50%;
+    animation: lgBlink 1.4s ease-in-out infinite;
+  }
+  @keyframes lgBlink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+  .lg-headline {
+    font-family: 'Barlow', sans-serif;
+    font-size: clamp(36px, 4.4vw, 60px);
+    font-weight: 900;
+    line-height: 1.06;
+    letter-spacing: -1px;
+    color: #ffffff;
+    margin-bottom: 16px;
+    text-shadow: 0 2px 18px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .lg-headline .gold {
+    color: #f0c040;
+    animation: lgGold 3s ease-in-out infinite;
+  }
+  @keyframes lgGold {
+    0%,100%{text-shadow:0 0 0 rgba(224,168,0,0)}
+    50%{text-shadow:0 0 22px rgba(224,168,0,0.6)}
+  }
+
+  .lg-sub {
+    font-size: 17px;
+    color: rgba(255,255,255,0.92);
+    max-width: 480px;
+    line-height: 1.65;
+    margin-bottom: 32px;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  }
+
+  .lg-stats-row { display: flex; gap: 36px; }
+  .lg-stat { position: relative; padding-left: 16px; }
+  .lg-stat::before {
+    content: '';
+    position: absolute; left: 0; top: 4px; bottom: 4px;
+    width: 3px; background: #e0a800; border-radius: 2px;
+  }
+  .lg-stat-num {
+    font-family: 'Barlow', sans-serif;
+    font-size: 34px; font-weight: 900; color: #fff; line-height: 1;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+  .lg-stat-lbl {
+    font-size: 12px; font-weight: 500;
+    color: rgba(255,255,255,0.85);
+    text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;
+  }
+
+  /* ══ FORM AREA — droite ══ */
+  .lg-form-area {
+    width: 640px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 48px 70px 48px 44px;
+    position: relative;
+  }
+  /* Voile clair très subtil pour aider le card à ressortir si la vidéo est sombre à cet endroit */
+  .lg-form-area::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at right center, rgba(255, 245, 230, 0.10) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ══ CARD GLASSMORPHISM — claire, vidéo visible derrière ══ */
+  .lg-form-card {
+    width: 100%;
+    max-width: 560px;
+    background: rgba(255, 255, 255, 0.42);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border-radius: 24px;
+    padding: 40px 40px 32px;
+    box-shadow:
+      /* léger highlight interne en haut */
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+      /* ombre principale */
+      0 24px 60px -12px rgba(15, 25, 35, 0.35),
+      0 8px 20px -4px rgba(15, 25, 35, 0.20);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    position: relative;
+    z-index: 1;
+    animation: lgFadeIn 0.7s cubic-bezier(.16,1,.3,1) 0.1s both;
+    overflow: hidden;
+  }
+  /* Halo lumineux subtil en haut du card (reflet de la lumière de la vidéo) */
+  .lg-form-card::before {
+    content: '';
+    position: absolute;
+    top: -40%; left: -20%; right: -20%;
+    height: 60%;
+    background: radial-gradient(ellipse at center top, rgba(255, 245, 220, 0.35) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  /* Ligne dorée très fine en haut (accent premium) */
+  .lg-form-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 24px; right: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(196, 154, 0, 0.55) 50%, transparent 100%);
+    z-index: 2;
+  }
+  @keyframes lgFadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* En-tête : logo + badge sécurité */
+  .lg-card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .lg-card-logo {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+  .lg-card-logo img {
+    width: min(400px, 100%);
+    height: auto;
+    object-fit: contain;
+    position: relative;
+    z-index: 1;
+  }
+  .lg-sec-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(34, 197, 94, 0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(34, 197, 94, 0.40);
+    border-radius: 100px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0f5d2e;
+    letter-spacing: 0.3px;
+    position: relative;
+    z-index: 1;
+  }
+  .lg-sec-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: #16a34a;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+  }
+
+  /* Titre & sous-titre */
+  .lg-form-title {
+    font-family: 'Barlow', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: #0a1018;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+    line-height: 1.15;
+    position: relative;
+    z-index: 1;
+  }
+  .lg-form-sub {
+    font-size: 14px;
+    color: #3a4654;
+    margin-bottom: 24px;
+    line-height: 1.5;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Champs */
+  .lg-field { margin-bottom: 14px; position: relative; z-index: 1; }
+  .lg-field-label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #1a2530;
+    margin-bottom: 6px;
+    letter-spacing: 0.1px;
+  }
+  .lg-field-inner {
+    position: relative;
+    display: block;
+    width: 100%;
+  }
+  .lg-field-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6a7585;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+    z-index: 2;
+  }
+  .lg-field-inner input {
+    display: block;
+    width: 100%;
+    padding: 13px 46px 13px 46px;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    border-radius: 11px;
+    font-size: 14.5px;
+    font-family: inherit;
+    color: #0a1018;
+    transition: all 0.2s;
+    outline: none;
+    box-sizing: border-box;
+  }
+  .lg-field-inner input::placeholder { color: #7a8595; }
+  .lg-field-inner input:hover { background: rgba(255, 255, 255, 0.7); }
+  .lg-field-inner input:focus {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(196, 154, 0, 0.7);
+    box-shadow: 0 0 0 3px rgba(196, 154, 0, 0.18);
+  }
+  .lg-field-inner:focus-within .lg-field-icon { color: #c49a00; }
+
+  .lg-eye-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    color: #6a7585; padding: 4px;
+    display: flex; align-items: center;
+    transition: color 0.2s;
+    z-index: 2;
+  }
+  .lg-eye-btn:hover { color: #0a1018; }
+
+  /* Options : remember + forgot */
+  .lg-form-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 0 14px;
+    position: relative;
+    z-index: 1;
+  }
+  .lg-remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #2a3540;
+    cursor: pointer;
+    user-select: none;
+  }
+  .lg-remember input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: #c49a00;
+    cursor: pointer;
+  }
+  .lg-forgot {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8a5a00;
+    transition: color 0.2s;
+  }
+  .lg-forgot:hover { color: #5a3a00; text-decoration: underline; }
+
+  /* Erreur */
+  .lg-error-msg {
+    min-height: 20px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #b91c1c;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  .lg-error-msg:empty { display: none; }
+
+  /* Bouton principal */
+  .lg-submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #a06800 0%, #b8821a 50%, #c89020 100%);
+    border-radius: 12px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    font-family: inherit;
+    letter-spacing: 0.2px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 18px rgba(140, 90, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 1;
+  }
+  .lg-submit-btn::before {
+    content:'';
+    position:absolute; top:0; left:-100%; width:55%; height:100%;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+    animation: lgShine 2.5s ease-in-out infinite;
+  }
+  @keyframes lgShine { 0%{left:-100%} 50%,100%{left:150%} }
+  .lg-submit-btn:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(196,125,0,0.55); }
+  .lg-submit-btn:active { transform:translateY(0); }
+  .lg-submit-btn:disabled { opacity:0.75; cursor:wait; transform:none; }
+
+  .lg-submit-btn .lg-btn-loader {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: lgSpin 0.7s linear infinite;
+    display: none;
+  }
+  .lg-submit-btn.loading .lg-btn-text { opacity: 0.7; }
+  .lg-submit-btn.loading .lg-btn-loader { display: block; }
+  @keyframes lgSpin { to { transform: rotate(360deg); } }
+
+  /* Divider */
+  .lg-form-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 14px;
+    color: #4a5564;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    position: relative;
+    z-index: 1;
+  }
+  .lg-form-divider::before,
+  .lg-form-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(15, 25, 35, 0.18);
+  }
+
+  /* Cartes de rôles */
+  .lg-form-roles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .lg-role {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 11px 6px;
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 10px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #2a3540;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .lg-role:hover {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(196, 154, 0, 0.6);
+    transform: translateY(-1px);
+  }
+  .lg-role-icon { font-size: 18px; line-height: 1; }
+
+  /* Footer */
+  .lg-form-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 11px;
+    color: #4a5564;
+    line-height: 1.5;
+    position: relative;
+    z-index: 1;
+  }
+  .lg-form-footer a {
+    color: #2a3540;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .lg-form-footer a:hover { color: #8a5a00; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    .lg-form-area { width: 460px; padding: 40px 28px; }
+    .lg-brand-area { padding: 52px 40px; }
+  }
+  @media (max-width: 900px) {
+    .lg-inner { flex-direction: column; }
+    .lg-brand-area { display: none; }
+    .lg-form-area {
+      width: 100%;
+      padding: 28px 18px;
+    }
+  }
+  @media (max-width: 480px) {
+    .lg-form-card { padding: 30px 22px 24px; border-radius: 18px; }
+    .lg-form-title { font-size: 24px; }
+  }
+</style>
+
+<div class="lg-scene">
+
+  <!-- ══ Vidéo background — soie → voiture reveal ══ -->
+  <video class="lg-video-bg" autoplay muted loop playsinline preload="auto" poster="">
+    <source src="login-bg.mp4" type="video/mp4">
+  </video>
+
+  <!-- Overlay doux pour lisibilité -->
+  <div class="lg-overlay"></div>
+
+  <!-- Particules dorées -->
+  <div class="lg-particles" id="lg-particles"></div>
+
+  <!-- Barre accent gauche -->
+  <div class="lg-accent-bar"></div>
+
+  <div class="lg-inner">
+
+    <!-- ══ LEFT — Brand area ══ -->
+    <div class="lg-brand-area">
+
+      <div class="lg-logo-wrap">
+        <img class="lg-logo-img" src="logo-light.png" alt="City Rent Car" onerror="this.style.display='none'">
+      </div>
+
+      <div class="lg-brand">
+        <div class="lg-tagline-badge">Fleet Management System</div>
+        <h1 class="lg-headline">
+          Drive your fleet.<br>
+          <span class="gold">In real time.</span>
+        </h1>
+        <p class="lg-sub">
+          Everything you need—vehicles, operations, and growth—<br>
+          secured in a single, powerful workspace.
+        </p>
+        <div class="lg-stats-row">
+          <div class="lg-stat">
+            <div class="lg-stat-num">100+</div>
+            <div class="lg-stat-lbl">Vehicles</div>
+          </div>
+          <div class="lg-stat">
+            <div class="lg-stat-num">1</div>
+            <div class="lg-stat-lbl">Démo</div>
+          </div>
+          <div class="lg-stat">
+            <div class="lg-stat-num">24/7</div>
+            <div class="lg-stat-lbl">Fleet Ops</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RIGHT — Form area ══ -->
+    <div class="lg-form-area">
+      <div class="lg-form-card">
+
+        <div class="lg-card-header">
+          <div class="lg-card-logo">
+            <img src="logo-light.png" alt="City Rent Car" onerror="this.style.display='none'">
+          </div>
+          <span class="lg-sec-badge">Secure Connection</span>
+        </div>
+
+        <h2 class="lg-form-title">Welcome back 👋</h2>
+        <p class="lg-form-sub">Sign in to access your management workspace.</p>
+
+        <!-- Username -->
+        <div class="lg-field">
+          <label class="lg-field-label" for="login-username">Username</label>
+          <div class="lg-field-inner">
+            <span class="lg-field-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <input id="login-username" type="text" placeholder="Enter your username"
+              autocomplete="username"
+              onkeydown="if(event.key==='Enter'){document.getElementById('login-password').focus()}">
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="lg-field">
+          <label class="lg-field-label" for="login-password">Password</label>
+          <div class="lg-field-inner">
+            <span class="lg-field-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input id="login-password" type="password" placeholder="Enter your password"
+              autocomplete="current-password"
+              onkeydown="if(event.key==='Enter'){doLogin()}">
+            <button type="button" class="lg-eye-btn" id="login-toggle-pass" aria-label="Show password" data-lg-action="toggle-password">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Options : remember + forgot -->
+        <div class="lg-form-options">
+          <label class="lg-remember">
+            <input type="checkbox" id="login-remember">
+            <span>Remember me</span>
+          </label>
+          <a href="#" class="lg-forgot" data-lg-action="prevent-default">Forgot password?</a>
+        </div>
+
+        <div id="login-error" class="lg-error-msg"></div>
+
+        <button type="button" class="lg-submit-btn" id="login-btn" data-lg-action="do-login">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          <span class="lg-btn-text">Sign in</span>
+          <span class="lg-btn-loader"></span>
+        </button>
+
+        <div class="lg-form-footer">
+          © 2026 City Rent Car · <a href="#" data-lg-action="prevent-default">Need help?</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+  function lgTogglePass(){
+    var p = document.getElementById('login-password');
+    var btn = document.getElementById('login-toggle-pass');
+    var show = p.type === 'text';
+    p.type = show ? 'password' : 'text';
+    btn.innerHTML = show
+      ? '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+      : '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  }
+
+  // Loader sur le bouton pendant la connexion
+  (function(){
+    var btn = document.getElementById('login-btn');
+    if(!btn) return;
+    window.addEventListener('pageshow', function(){
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    });
+    setInterval(function(){
+      if (btn.disabled && !btn.classList.contains('loading')) {
+        btn.classList.add('loading');
+      } else if (!btn.disabled && btn.classList.contains('loading')) {
+        btn.classList.remove('loading');
+      }
+    }, 120);
+  })();
+
+  (function(){
+    var c = document.getElementById('lg-particles');
+    if(!c) return;
+    for(var i=0;i<8;i++){
+      var p = document.createElement('div');
+      p.className='lg-particle';
+      var size=Math.random()*10+4;
+      p.style.cssText='width:'+size+'px;height:'+size+'px;left:'+(Math.random()*100)+'%;animation-duration:'+(Math.random()*12+8)+'s;animation-delay:'+(Math.random()*10)+'s;';
+      c.appendChild(p);
+    }
+  })();
+</script>
+<script>
+  // ── Délégation d'événements (2026-08) — données-lg-action ──
+  document.addEventListener('click', function(e){
+    let btn = e.target.closest('[data-lg-action]');
+    if(!btn) return;
+    let action = btn.dataset.lgAction;
+
+    if(action === 'toggle-password'){
+      e.preventDefault();
+      if(typeof lgTogglePass === 'function') lgTogglePass();
+    }
+    else if(action === 'do-login'){
+      e.preventDefault();
+      if(typeof doLogin === 'function') doLogin();
+    }
+    else if(action === 'prevent-default'){
+      e.preventDefault();
+    }
+  });
+
+  // ── doLogin — version autonome pour login.html (page séparée) ──
+  function doLogin(){
+    let username = (document.getElementById('login-username').value || '').trim();
+    let password = document.getElementById('login-password').value || '';
+    let btn = document.getElementById('login-btn');
+    if(!username || !password){
+      document.getElementById('login-error').textContent = 'Merci de remplir les 2 champs.';
+      return;
+    }
+    if(btn){ btn.disabled = true; btn.textContent = 'Signing you in...'; }
+    fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    .then(r => r.json())
+    .then(r => {
+      if(btn){ btn.disabled = false; btn.textContent = 'Sign in to City'; }
+      if(r.ok){
+        let auth = { token: r.token, username: r.username, branches: r.branches, isAdmin: r.isAdmin };
+        try { localStorage.setItem('fleetpro_auth', JSON.stringify(auth)); } catch(e){}
+        window.location.href = 'app.html';
+      } else {
+        document.getElementById('login-error').textContent = r.error || 'Identifiants invalides.';
+      }
+    })
+    .catch(() => {
+      if(btn){ btn.disabled = false; btn.textContent = 'Sign in to City'; }
+      document.getElementById('login-error').textContent = '⚠️ Serveur inaccessible.';
+    });
+  }
+
+  // Si un token valide existe déjà, on renvoie direct vers l'app.
+  (function(){
+    try {
+      let raw = localStorage.getItem('fleetpro_auth');
+      if(raw){
+        let saved = JSON.parse(raw);
+        if(saved && saved.token){ window.location.href = 'app.html'; }
+      }
+    } catch(e){}
+  })();
+</script>
+</body>
+</html>
